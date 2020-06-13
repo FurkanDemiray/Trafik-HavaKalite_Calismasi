@@ -14,6 +14,7 @@ plt.plot(data.Tarih,data.Trafik_Indeks)
 plt.show()
 
 print(data.min())
+print(data.max())
 
 plt.figure(figsize=(72,12))
 plt.subplot(2,2,1)
