@@ -50,9 +50,21 @@ Maddelerin sınırlarını ayrı ayrı görmek istersek tablo şu şekilde oluyo
 
 ![](https://github.com/FurkanDemiray/Trafik-HavaKalite_Calismasi/blob/master/Report/table.png)
 
+##  Veriseti Max-Min Değerler
 
-| Left-Aligned  | Center Aligned  | Right Aligned |
-| :------------ |:---------------:| -----:|
-| col 3 is      | some wordy text | $1600 |
-| col 2 is      | centered        |   $12 |
-| zebra stripes | are neat        |    $1 |
+Verilerin analizi için max-min sınırlar bizlere karakteristik bazı özelliklerini gösterir. Bu sebeple max-min sınırlar aşağıdaki tabloda gösterilmiştir.
+
+| Özellik       | Min                 | Min                 |
+| :------------ |:-------------------:|:-------------------:|
+| Tarih         | 2019-01-01 00:00:00 | 2020-02-04 00:00:00 |
+| PM10          | 16.3583             | 163.483             |
+| SO2           | 0.879167            | 14.275              |
+| CO            | 162.229             | 2077.03             |
+| NO2           | 49.5158             | 198.396             |
+| NOX           | 57.1208             | 740.883             |
+| NO            | 7.525               | 401.712             |
+| O3            | 1.59167             | 65.6875             |
+| Trafik_Indeks | 4.6993              | 44.4826             |
+
+
+## SDAFLŞKAFEDGK
