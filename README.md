@@ -117,7 +117,8 @@ plt.show()
 
 ![](https://github.com/FurkanDemiray/Trafik-HavaKalite_Calismasi/blob/master/Graphs/All.png)
 
-Grafiğe bakıldığında genellikle bir değer pick yaptığında diğer değerlerle birlikte artışa geçmiş. Bu da bizlere zararlı maddeler arasında bir bağlantı olduğu, aynı zamanda bir tetikleme(Trafik artışı, Sanayi aktivitesi) ile pick yaptığı düşünülebilir. Trafik artışı ile maddelerin paralel ilerlemesi kaydadeğer şekilde bir ilişkiyi göstermektedir.
+Grafiğe bakıldığında genellikle bir değer pick yaptığında diğer değerlerle birlikte artışa geçmiş. Bu da bizlere zararlı maddeler arasında bir bağlantı olduğu, aynı zamanda bir tetikleme(Trafik artışı, Sanayi aktivitesi) ile pick yaptığı düşünülebilir.
+
 
 Trafik ve zararlı maddeler ilişkisini daha net görmek adına her maddeyi trafik oranıyla birlikte ele alalım. İki durum arasındaki ilişkiyi en net şekilde gösteren grafiklerden biriside korelasyon grafikleridir. 
 
@@ -131,6 +132,131 @@ Trafik ve zararlı maddeler ilişkisini daha net görmek adına her maddeyi traf
 
 Grafiklere bakıldığında orta alanda bir yoğunluk görülmekte. Trafik max durumdayken zararlı madde artışı net olmasada min ile max oratasında bir yığılma var. Bu da zararlı madddelerin çoğunlukla %20 - %30 civarında artışa geçtiğini gösteriyor. Ancak bu maddelerin artışında bir çok faktörün rol oynadığı unutulmamalıdır. CO grafiğine bakıldığında diğerlerine kıyasla trafik ile daha paralel bir artış gerçekleştiğini söylemek mümkün. Bu da CO değerinin, Trafik_Indeks oranını tahmin etme aşamasında yüksek ağırlıklardan birisi olacağını göstermektedir.
 
+## LSTM Algoritması ile Trafik İndeks Tahmini
+
+LSTM bir RNN algoritmasıdır. Yapılan çalışmalarda yinelenen sinir ağları(RNN), yapısal olarak bu çalışmaya daha uygun olacağı düşünülmüştür. Yapay öğrenme gerçekleşirken yüksek kaynak tüketimi nedeni ile Google Colab ile çalışma devam etmiştir.
+
+##### Grafik oluşturmak için kullanılan .py dosyası :　
+
+```python
+from google.colab import files
+uploaded = files.upload()
+!pip install pyyaml h5py
+import io
+import pandas as pd
+import numpy as np
+
+data = pd.read_excel(io.BytesIO(uploaded['merged_full.xlsx']))
 
 
+import math
+from sklearn.preprocessing import MinMaxScaler
+from keras.models import Sequential
+from keras.layers import Dense, LSTM
+import matplotlib.pyplot as plt
 
+
+plt.figure(figsize=(20,6))
+plt.plot(data.Tarih,data.Trafik_Indeks)
+plt.show()
+
+
+veri = data.filter(['Trafik_Indeks'])
+dataset = veri.values
+training_data_len = math.ceil( len(dataset) *.8)
+scaler = MinMaxScaler(feature_range=(0, 1)) 
+scaled_data = scaler.fit_transform(dataset)
+
+train_data = scaled_data[0:training_data_len  , : ]
+x_train=[]
+y_train = []
+for i in range(60,len(train_data)):
+    x_train.append(train_data[i-60:i,0])
+    y_train.append(train_data[i,0])
+    
+    
+x_train, y_train = np.array(x_train), np.array(y_train)
+x_train = np.reshape(x_train, (x_train.shape[0],x_train.shape[1],1))
+
+
+model = Sequential()
+model.add(LSTM(units=50, return_sequences=True,input_shape=(x_train.shape[1],1)))
+model.add(LSTM(units=50, return_sequences=False))
+model.add(Dense(units=25))
+model.add(Dense(units=1))
+
+model.compile(optimizer='adam', loss='mean_squared_error',metrics=["accuracy",'mse','mae'])
+
+model.fit(x_train, y_train, batch_size=1, epochs=70)
+
+test_data = scaled_data[training_data_len - 60: , : ]
+
+x_test = []
+y_test =  dataset[training_data_len : , : ]
+for i in range(60,len(test_data)):
+    x_test.append(test_data[i-60:i,0])
+    
+x_test = np.array(x_test)
+
+x_test = np.reshape(x_test, (x_test.shape[0],x_test.shape[1],1))   
+
+predictions = model.predict(x_test) 
+predictions = scaler.inverse_transform(predictions)
+
+rmse=np.sqrt(np.mean(((predictions- y_test)**2)))
+rmse
+
+
+train = data[:training_data_len]
+valid = data[training_data_len:]
+valid['Predictions'] = predictions
+
+plt.figure(figsize=(25,8))
+plt.title('Model')
+plt.xlabel('Tarih', fontsize=18)
+plt.ylabel('Trafik', fontsize=18)
+plt.plot(train['Trafik_Indeks'])
+plt.plot(valid[['Trafik_Indeks', 'Predictions']])
+plt.legend(['Eğitim Verisi', 'Gerçek Değer', 'Tahmin'], loc='lower right')
+plt.show()
+
+valid
+
+model.save_weights('model.h5')
+
+print("Ortalama Kayıp:",np.mean(model.history.history["loss"]))
+
+
+plt.plot(model.history.history["loss"])
+plt.title("Model Başarımları")
+plt.ylabel("Kayıp Oranı")
+plt.xlabel("Epok")
+plt.legend(["Kayıp","Test"],loc="upper left")
+plt.show()
+
+from keras.callbacks import History 
+history = History()
+plt.plot(model.history.history['mse'])
+plt.plot(model.history.history['mae'])
+plt.legend(["Mean Squared Error","Mean Absolute Error"],loc="upper left")
+plt.show()
+
+```
+
+Model oluşturulurken bir çok farklı düğüm ve katman modeli test edilmiştir. Ancak en stabil çalışan model söz konusu model olduğu için bu şekilde devam edilmiştir. Eğitim için verinin %80'i kullanılmıştır.
+
+Eğitilmiş model ile her çalışmada başlangıcında tekrar tekrar eğitim gerçekleştirmemek adına modelin ağırlık dosyası kaydedilip çalışma başında yüklenerek ilerleme kaydedildi. Bu sayede lokal bilgisayarlarda çalışma imkanı elde ettik. Aynı zamanda bu ağırlık dosyası konu ile ilgili tahmin uygulamaları geliştirmelerinde kullanılabilir hale geldi.
+
+Eğitim sonrasında `rmse` değerine bakıldığında `7.496736151229131` gibi bir değer görülmekte. Bu değer 0'a ne kadar yakın olursa; tahmin değerleri, gerçek değerler kümesine o kadar yaklaşır. Bu da başarımın ve kaybı temsil değerlerinden biridir.
+
+Ortalama kayıp ve hata değerleri aşağıdaki grafiklerde gösterilmiştir:
+
+![](https://github.com/FurkanDemiray/Trafik-HavaKalite_Calismasi/blob/master/Graphs/avg_loss.png)
+![](https://github.com/FurkanDemiray/Trafik-HavaKalite_Calismasi/blob/master/Graphs/mse.png)
+
+
+Test amaçlı olarak ayrılan 60 gerçek veri ile tahmini verileri içeren bir dataframe oluşturulmuştur. Gerçek değerler ile tahmin değerlerini net bir şekilde görmek adına çizgi grafiğinde gösterilmiştir.
+
+![](https://github.com/FurkanDemiray/Trafik-HavaKalite_Calismasi/blob/master/Graphs/Figure_1.png)
+
+Sonuç olarak bir genelleme yapılırsa algoritmanın tahminleri yaklaşık olarak yapması ve hata oranlarının düşük olması zararlı maddelerin oranı trafik ile ilişkisinin güçlü olduğunu söyleyebiliriz. Bu durumda trafik etkeninin hava kalitesindeki ağırlığı gözler önüne serilmiştir.
