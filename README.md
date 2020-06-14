@@ -67,4 +67,70 @@ Verilerin analizi için max-min sınırlar bizlere karakteristik bazı özellikl
 | Trafik_Indeks | 4.6993              | 44.4826             |
 
 
-## SDAFLŞKAFEDGK
+## Trafik - Zararlı Madde İlişkileri
+
+Verinin özellikleri ile araştıralan değer arasındaki ilişki grafikler üzerinde daha net görülebilir. Bu yüzden özelliklerin zaman içerisindeki değişimini çizgi grafiğine aktardık. 
+
+##### Grafik oluşturmak için kullanılan .py dosyası :　
+
+```python
+import numpy as np
+from matplotlib import pyplot as plt
+import pandas as pd
+import seaborn as sea
+data = pd.read_excel('merged_full.xlsx')
+print(data.isnull().sum())
+
+print(data.mean())
+
+data = data.fillna(data.mean())
+
+plt.figure(figsize=(12,6))
+plt.plot(data.Tarih,data.Trafik_Indeks)
+plt.show()
+
+plt.figure(figsize=(72,12))
+plt.subplot(2,2,1)
+plt.plot(data.Tarih,data.PM10,color="red")
+plt.plot(data.Tarih,data.SO2,color="blue")
+plt.plot(data.Tarih,data.NO2,color="black")
+plt.plot(data.Tarih,data.NO,color="orange")
+plt.plot(data.Tarih,data.O3,color="gray")
+plt.xlabel("Tarih")
+plt.ylabel("PM10-SO2-NO2-NO-O3 Miktarı")
+plt.title("Zamana Göre PM10(Red)-SO2(Blue)-NO2(Black)-NO(Orange)-O3(Gray)")
+plt.show()
+
+sea.scatterplot(x ="SO2",y="Trafik_Indeks", data=data)
+plt.show()
+sea.scatterplot(x ="NO",y="Trafik_Indeks", data=data,color="red")
+plt.show()
+sea.scatterplot(x ="NOX",y="Trafik_Indeks", data=data,color="yellow")
+plt.show()
+sea.scatterplot(x ="PM10",y="Trafik_Indeks", data=data,color="orange")
+plt.show()
+sea.scatterplot(x ="NO2",y="Trafik_Indeks", data=data,color="gray")
+plt.show()
+sea.scatterplot(x ="CO",y="Trafik_Indeks", data=data,color="black")
+plt.show()
+```
+
+![](https://github.com/FurkanDemiray/Trafik-HavaKalite_Calismasi/blob/master/Graphs/All.png)
+
+Grafiğe bakıldığında genellikle bir değer pick yaptığında diğer değerlerle birlikte artışa geçmiş. Bu da bizlere zararlı maddeler arasında bir bağlantı olduğu, aynı zamanda bir tetikleme(Trafik artışı, Sanayi aktivitesi) ile pick yaptığı düşünülebilir. Trafik artışı ile maddelerin paralel ilerlemesi kaydadeğer şekilde bir ilişkiyi göstermektedir.
+
+Trafik ve zararlı maddeler ilişkisini daha net görmek adına her maddeyi trafik oranıyla birlikte ele alalım. İki durum arasındaki ilişkiyi en net şekilde gösteren grafiklerden biriside korelasyon grafikleridir. 
+
+![](https://github.com/FurkanDemiray/Trafik-HavaKalite_Calismasi/blob/master/Graphs/KolerasyonCO.png)
+![](https://github.com/FurkanDemiray/Trafik-HavaKalite_Calismasi/blob/master/Graphs/KolerasyonNO.png)
+![](https://github.com/FurkanDemiray/Trafik-HavaKalite_Calismasi/blob/master/Graphs/KolerasyonNO2.png)
+![](https://github.com/FurkanDemiray/Trafik-HavaKalite_Calismasi/blob/master/Graphs/KolerasyonNOX.png)
+![](https://github.com/FurkanDemiray/Trafik-HavaKalite_Calismasi/blob/master/Graphs/KolerasyonPM10.png)
+![](https://github.com/FurkanDemiray/Trafik-HavaKalite_Calismasi/blob/master/Graphs/KolerasyonSO2.png)
+![](https://github.com/FurkanDemiray/Trafik-HavaKalite_Calismasi/blob/master/Graphs/Korelasyon_O3.png)
+
+Grafiklere bakıldığında orta alanda bir yoğunluk görülmekte. Trafik max durumdayken zararlı madde artışı net olmasada min ile max oratasında bir yığılma var. Bu da zararlı madddelerin çoğunlukla %20 - %30 civarında artışa geçtiğini gösteriyor. Ancak bu maddelerin artışında bir çok faktörün rol oynadığı unutulmamalıdır. CO grafiğine bakıldığında diğerlerine kıyasla trafik ile daha paralel bir artış gerçekleştiğini söylemek mümkün. Bu da CO değerinin, Trafik_Indeks oranını tahmin etme aşamasında yüksek ağırlıklardan birisi olacağını göstermektedir.
+
+
+
+
